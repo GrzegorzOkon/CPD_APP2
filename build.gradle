@@ -23,3 +23,12 @@ sourceSets {
         java.srcDirs = ['src\\test']
     }
 }
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'okon.CPD_APP2.CpdApp2App'
+    }
+    doFirst {
+        from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+    }
+}

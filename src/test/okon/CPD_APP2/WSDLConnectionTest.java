@@ -2,13 +2,11 @@ package okon.CPD_APP2;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class WSDLConnectionTest {
 
-    @Test(expected = ApiException.class)
+    @Test(expected = AppException.class)
     public void onWrongParameters_ShouldThrownApiException() {
-        new WSDLConnection("test");
+        new WsdlConnection("test");
     }
 
     /*private static TAR1NameBuilder nameBuilder;
