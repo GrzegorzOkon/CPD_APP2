@@ -1,6 +1,6 @@
 package okon.CPD_APP2;
 
-import okon.CPD_APP2.entities.WsdlDetails;
+import okon.CPD_APP2.Message;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,32 +25,47 @@ public class CpdApp2App {
 
         Properties properties = cpd_app2.loadPropertiesFromFile();
 
-        List<WsdlDetails> services = cpd_app2.checkAllServices(properties);
+        List<Message> services = cpd_app2.checkAllServices(properties);
 
         cpd_app2.saveToFile("CPD_APP2.txt", services);
     }
 
-    public List<WsdlDetails> checkAllServices(Properties properties) {
-        List<WsdlDetails> servicesDetails = new ArrayList<>();
+    public List<Message> checkAllServices(Properties properties) {
+        List<Message> checkingDetails = new ArrayList<>();
 
         for (Object key : properties.keySet()) {
-            servicesDetails.add(checkSingleService((String)key, (String)properties.get(key)));
+            Message message = null;
+
+            message = checkService((String)key, (String)properties.get(key), 5);
+            checkingDetails.add(message);
         }
 
-        return servicesDetails;
+        return checkingDetails;
     }
 
-    public WsdlDetails checkSingleService(String description, String url) {
+    public Message checkService(String description, String url, int allChecksNumber) {
+        int correctChecksCounter = 0;
+
+        for (int i = 0; i < allChecksNumber; i++) {
+            if (isCorrectService(description, url)) {
+                correctChecksCounter++;
+            }
+        }
+
+        return new Message(description, url, correctChecksCounter, allChecksNumber);
+    }
+
+    public boolean isCorrectService(String description, String url) {
         try (WsdlConnection connection = connectionFactory.build(url)) {
             try {
                 String response = connection.response();
                 if (response != null) {
-                    return new WsdlDetails(description, url, true);
+                    return true;
                 }
             } catch (AppException e) {}
         }
 
-        return new WsdlDetails(description, url, false);
+        return false;
     }
 
     private Properties loadPropertiesFromFile() {
@@ -65,14 +80,22 @@ public class CpdApp2App {
         return properties;
     }
 
-    public void saveToFile(String fileName, List<WsdlDetails> content) {
+    public void saveToFile(String fileName, List<Message> content) {
         try (FileOutputStream out = new FileOutputStream(new java.io.File(fileName))) {
-            for(WsdlDetails item : content) {
+            for(Message item : content) {
                 byte[] firstLine = item.getDescription().getBytes();
                 byte[] secondLine;
 
-                if (item.isCorrect()) {
+                if (item.getCorrectChecks() == 5) {
                     secondLine = (item.getUrl() + " ****** 100 %").getBytes();
+                } else if (item.getCorrectChecks() == 4){
+                    secondLine = (item.getUrl() + " ****** 80 %").getBytes();
+                } else if (item.getCorrectChecks() == 3){
+                    secondLine = (item.getUrl() + " ****** 60 %").getBytes();
+                } else if (item.getCorrectChecks() == 2){
+                    secondLine = (item.getUrl() + " ****** 40 %").getBytes();
+                } else if (item.getCorrectChecks() == 1){
+                    secondLine = (item.getUrl() + " ****** 20 %").getBytes();
                 } else {
                     secondLine = (item.getUrl() + " ****** 0 %").getBytes();
                 }
