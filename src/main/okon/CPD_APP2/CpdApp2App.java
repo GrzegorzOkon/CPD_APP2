@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
@@ -27,7 +28,8 @@ public class CpdApp2App {
 
         List<Message> services = cpd_app2.checkAllServices(properties);
 
-        Collections.sort(services);
+        Comparator<Message> byUrlComparator = (m1, m2) -> m1.url.compareTo(m2.url);
+        Collections.sort(services, byUrlComparator);
 
         cpd_app2.saveToFile("CPD_APP2.txt", services);
     }
