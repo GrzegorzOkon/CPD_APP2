@@ -7,11 +7,11 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class WsdlConnection implements Closeable {
+public class HttpConnection implements Closeable {
 
     private final HttpURLConnection connection;
 
-    public WsdlConnection(String url) {
+    public HttpConnection(String url) {
         try {
             connection = (HttpURLConnection) new URL(url).openConnection();
         } catch (IOException e) {

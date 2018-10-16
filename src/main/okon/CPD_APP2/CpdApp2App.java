@@ -5,11 +5,11 @@ import okon.CPD_APP2.Message;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
 public class CpdApp2App {
-
     private final ConnectionFactory connectionFactory;
 
     public CpdApp2App() {
@@ -27,6 +27,8 @@ public class CpdApp2App {
 
         List<Message> services = cpd_app2.checkAllServices(properties);
 
+        Collections.sort(services);
+
         cpd_app2.saveToFile("CPD_APP2.txt", services);
     }
 
@@ -36,27 +38,27 @@ public class CpdApp2App {
         for (Object key : properties.keySet()) {
             Message message = null;
 
-            message = checkService((String)key, (String)properties.get(key), 5);
+            message = checkService((String)properties.get(key), (String)key, 5);
             checkingDetails.add(message);
         }
 
         return checkingDetails;
     }
 
-    public Message checkService(String description, String url, int allChecksNumber) {
+    public Message checkService(String url, String description, int allChecksNumber) {
         int correctChecksCounter = 0;
 
         for (int i = 0; i < allChecksNumber; i++) {
-            if (isCorrectService(description, url)) {
+            if (isCorrectService(url, description)) {
                 correctChecksCounter++;
             }
         }
 
-        return new Message(description, url, correctChecksCounter, allChecksNumber);
+        return new Message(url, description, correctChecksCounter, allChecksNumber);
     }
 
-    public boolean isCorrectService(String description, String url) {
-        try (WsdlConnection connection = connectionFactory.build(url)) {
+    public boolean isCorrectService(String url, String description) {
+        try (HttpConnection connection = connectionFactory.build(url)) {
             try {
                 String response = connection.response();
                 if (response != null) {
