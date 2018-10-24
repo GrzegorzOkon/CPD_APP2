@@ -26,7 +26,7 @@ public class CpdApp2App {
 
         Properties properties = cpd_app2.loadPropertiesFromFile();
 
-        List<Message> services = cpd_app2.checkAllServices(properties);
+        List<Message> services = cpd_app2.checkAllServices(properties, 5);
 
         Comparator<Message> byUrlComparator = (m1, m2) -> m1.url.compareTo(m2.url);
         Collections.sort(services, byUrlComparator);
@@ -34,29 +34,29 @@ public class CpdApp2App {
         cpd_app2.saveToFile("CPD_APP2.txt", services);
     }
 
-    public List<Message> checkAllServices(Properties properties) {
+    public List<Message> checkAllServices(Properties properties, int allChecks) {
         List<Message> checkingDetails = new ArrayList<>();
 
         for (Object key : properties.keySet()) {
             Message message = null;
 
-            message = checkService((String)properties.get(key), (String)key, 5);
+            message = checkService((String)properties.get(key), (String)key, allChecks);
             checkingDetails.add(message);
         }
 
         return checkingDetails;
     }
 
-    public Message checkService(String url, String description, int allChecksNumber) {
+    public Message checkService(String url, String description, int allChecks) {
         int correctChecksCounter = 0;
 
-        for (int i = 0; i < allChecksNumber; i++) {
+        for (int i = 0; i < allChecks; i++) {
             if (isCorrectService(url, description)) {
                 correctChecksCounter++;
             }
         }
 
-        return new Message(url, description, correctChecksCounter, allChecksNumber);
+        return new Message(url, description, correctChecksCounter, allChecks);
     }
 
     public boolean isCorrectService(String url, String description) {
