@@ -88,21 +88,7 @@ public class CpdApp2App {
         try (FileOutputStream out = new FileOutputStream(new java.io.File(fileName))) {
             for(Message item : content) {
                 byte[] firstLine = item.getDescription().getBytes();
-                byte[] secondLine;
-
-                if (item.getCorrectChecks() == 5) {
-                    secondLine = (item.getUrl() + " ****** 100 %").getBytes();
-                } else if (item.getCorrectChecks() == 4){
-                    secondLine = (item.getUrl() + " ****** 80 %").getBytes();
-                } else if (item.getCorrectChecks() == 3){
-                    secondLine = (item.getUrl() + " ****** 60 %").getBytes();
-                } else if (item.getCorrectChecks() == 2){
-                    secondLine = (item.getUrl() + " ****** 40 %").getBytes();
-                } else if (item.getCorrectChecks() == 1){
-                    secondLine = (item.getUrl() + " ****** 20 %").getBytes();
-                } else {
-                    secondLine = (item.getUrl() + " ****** 0 %").getBytes();
-                }
+                byte[] secondLine = (item.getUrl() + " ****** " + (int)(((float)item.getCorrectChecks()/(float)item.getAllChecks())*100) + " %").getBytes();
 
                 out.write(firstLine);
                 out.write(System.getProperty("line.separator").getBytes());
