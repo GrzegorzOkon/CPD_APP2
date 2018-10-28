@@ -1,7 +1,5 @@
 package okon.CPD_APP2;
 
-import okon.CPD_APP2.Message;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -24,14 +22,14 @@ public class CpdApp2App {
     public static void main(String[] args) {
         CpdApp2App cpd_app2 = new CpdApp2App();
 
-        Properties properties = cpd_app2.loadPropertiesFromFile();
+        Properties properties = cpd_app2.loadProperties();
 
         List<Message> services = cpd_app2.checkAllServices(properties, 5);
 
         Comparator<Message> byUrlComparator = (m1, m2) -> m1.url.compareTo(m2.url);
         Collections.sort(services, byUrlComparator);
 
-        cpd_app2.saveToFile("CPD_APP2.txt", services);
+        cpd_app2.save("CPD_APP2.txt", services);
     }
 
     public List<Message> checkAllServices(Properties properties, int allChecks) {
@@ -72,7 +70,7 @@ public class CpdApp2App {
         return false;
     }
 
-    private Properties loadPropertiesFromFile() {
+    private Properties loadProperties() {
         Properties properties = new Properties();
 
         try {
@@ -84,15 +82,14 @@ public class CpdApp2App {
         return properties;
     }
 
-    public void saveToFile(String fileName, List<Message> content) {
+    public void save(String fileName, List<Message> content) {
         try (FileOutputStream out = new FileOutputStream(new java.io.File(fileName))) {
-            for(Message item : content) {
-                byte[] firstLine = item.getDescription().getBytes();
-                byte[] secondLine = (item.getUrl() + " ****** " + (int)(((float)item.getCorrectChecks()/(float)item.getAllChecks())*100) + " %").getBytes();
+            for(Message message : content) {
+                List<byte[]> formattedText = new TxtFormatter(message).format();
 
-                out.write(firstLine);
+                out.write(formattedText.get(0));
                 out.write(System.getProperty("line.separator").getBytes());
-                out.write(secondLine);
+                out.write(formattedText.get(1));
                 out.write(System.getProperty("line.separator").getBytes());
             }
         } catch (Exception e) {
