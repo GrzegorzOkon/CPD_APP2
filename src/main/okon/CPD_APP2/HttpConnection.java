@@ -1,13 +1,12 @@
 package okon.CPD_APP2;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class HttpConnection implements Closeable {
+public class HttpConnection implements Connection {
 
     private final HttpURLConnection connection;
 
@@ -19,6 +18,7 @@ public class HttpConnection implements Closeable {
         }
     }
 
+    @Override
     public String response() throws AppException {
         //validateResponse();
         StringBuilder response = new StringBuilder();

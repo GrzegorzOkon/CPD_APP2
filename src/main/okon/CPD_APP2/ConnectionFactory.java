@@ -1,7 +1,13 @@
 package okon.CPD_APP2;
 
 public class ConnectionFactory {
-    public HttpConnection build(String url) {
-        return new HttpConnection(url);
+    public Connection build(String url) {
+        if (url.contains("http://")) {
+
+            return new HttpConnection(url);
+        } else {
+
+            return new HttpsConnection(url);
+        }
     }
 }

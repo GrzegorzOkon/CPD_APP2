@@ -58,7 +58,7 @@ public class CpdApp2App {
     }
 
     public boolean isCorrectService(String url, String description) {
-        try (HttpConnection connection = connectionFactory.build(url)) {
+        try (Connection connection = connectionFactory.build(url)) {
             try {
                 String response = connection.response();
                 if (response != null) {
