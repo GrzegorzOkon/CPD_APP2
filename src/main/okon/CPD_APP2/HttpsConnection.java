@@ -11,34 +11,30 @@ import java.security.cert.X509Certificate;
 
 public class HttpsConnection implements Connection {
 
-    private final HttpsURLConnection connection;
     private static SSLSocketFactory sslSocketFactory = null;
+
+    private static final TrustManager[] ALL_TRUSTING_TRUST_MANAGER = new TrustManager[] {
+            new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+            }
+    };
+
+    private static final HostnameVerifier ALL_TRUSTING_HOSTNAME_VERIFIER  = new HostnameVerifier() {
+        public boolean verify(String hostname, SSLSession session) {
+            return true;
+        }
+    };
+
+    private final HttpsURLConnection connection;
 
     public HttpsConnection(String url) {
         try {
             connection = (HttpsURLConnection) new URL(url).openConnection();
-
-            setAcceptAllVerifier((HttpsURLConnection)connection);
-            /*TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                }
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                }
-            }
-            };
-            SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            connection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-
-            HostnameVerifier allHostsValid = new HostnameVerifier() {
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            };
-            connection.setDefaultHostnameVerifier(allHostsValid);*/
+            setAcceptAllVerifier(connection);
         } catch (Exception e) {
             throw new AppException(e);
         }
@@ -64,37 +60,13 @@ public class HttpsConnection implements Connection {
         connection.disconnect();
     }
 
-    protected static void setAcceptAllVerifier(HttpsURLConnection connection) throws NoSuchAlgorithmException, KeyManagementException {
-
-        // Create the socket factory.
-        // Reusing the same socket factory allows sockets to be
-        // reused, supporting persistent connections.
+    private static void setAcceptAllVerifier(HttpsURLConnection connection) throws NoSuchAlgorithmException, KeyManagementException {
         if( null == sslSocketFactory) {
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, ALL_TRUSTING_TRUST_MANAGER, new java.security.SecureRandom());
             sslSocketFactory = sc.getSocketFactory();
         }
-
         connection.setSSLSocketFactory(sslSocketFactory);
-
-        // Since we may be using a cert with a different name, we need to ignore
-        // the hostname as well.
         connection.setHostnameVerifier(ALL_TRUSTING_HOSTNAME_VERIFIER);
     }
-
-    private static final TrustManager[] ALL_TRUSTING_TRUST_MANAGER = new TrustManager[] {
-            new X509TrustManager() {
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {}
-            }
-    };
-
-    private static final HostnameVerifier ALL_TRUSTING_HOSTNAME_VERIFIER  = new HostnameVerifier() {
-        public boolean verify(String hostname, SSLSession session) {
-            return true;
-        }
-    };
 }
