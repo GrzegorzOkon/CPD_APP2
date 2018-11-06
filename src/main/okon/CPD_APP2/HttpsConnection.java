@@ -31,11 +31,16 @@ public class HttpsConnection implements Connection {
 
     private final HttpsURLConnection connection;
 
-    public HttpsConnection(String url) {
+    public HttpsConnection(HttpDetails details) {
         try {
-            connection = (HttpsURLConnection) new URL(url).openConnection();
+            connection = (HttpsURLConnection) new URL(details.getUrl()).openConnection();
+
+            if (details.getLogin() != null)
+                authorize(details.getLogin(), details.getPassword());
+
             setAcceptAllVerifier(connection);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new AppException(e);
         }
     }
@@ -50,6 +55,7 @@ public class HttpsConnection implements Connection {
                 response.append(line);
             }
         } catch (IOException e) {
+            e.printStackTrace();
             throw new AppException(e);
         }
         return response.toString();
@@ -68,5 +74,11 @@ public class HttpsConnection implements Connection {
         }
         connection.setSSLSocketFactory(sslSocketFactory);
         connection.setHostnameVerifier(ALL_TRUSTING_HOSTNAME_VERIFIER);
+    }
+
+    private void authorize(String login, String password) {
+        String userpass = login + ":" + password;
+        String basicAuth = "Basic " + javax.xml.bind.DatatypeConverter.printBase64Binary(userpass.getBytes());
+        connection.setRequestProperty ("Authorization", basicAuth);
     }
 }

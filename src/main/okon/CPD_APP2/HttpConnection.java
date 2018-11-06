@@ -10,10 +10,14 @@ public class HttpConnection implements Connection {
 
     private final HttpURLConnection connection;
 
-    public HttpConnection(String url) {
+    public HttpConnection(HttpDetails details) {
         try {
-            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection = (HttpURLConnection) new URL(details.getUrl()).openConnection();
+
+            if (details.getLogin() != null)
+                authorize(details.getLogin(), details.getPassword());
         } catch (IOException e) {
+            e.printStackTrace();
             throw new AppException(e);
         }
     }
@@ -28,6 +32,7 @@ public class HttpConnection implements Connection {
                 response.append(line);
             }
         } catch (IOException e) {
+            e.printStackTrace();
             throw new AppException(e);
         }
         return response.toString();
@@ -36,5 +41,11 @@ public class HttpConnection implements Connection {
     @Override
     public void close() {
         connection.disconnect();
+    }
+
+    private void authorize(String login, String password) {
+        String userpass = login + ":" + password;
+        String basicAuth = "Basic " + javax.xml.bind.DatatypeConverter.printBase64Binary(userpass.getBytes());
+        connection.setRequestProperty ("Authorization", basicAuth);
     }
 }

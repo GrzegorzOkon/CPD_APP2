@@ -36,29 +36,29 @@ public class CpdApp2App {
         List<Message> checkingDetails = new ArrayList<>();
 
         for (Object key : properties.keySet()) {
-            Message message = null;
+            HttpDetails details = deformat((String)key, (String)properties.get(key));
 
-            message = checkService((String)properties.get(key), (String)key, allChecks);
+            Message message = checkService(details, allChecks);
             checkingDetails.add(message);
         }
 
         return checkingDetails;
     }
 
-    public Message checkService(String url, String description, int allChecks) {
+    public Message checkService(HttpDetails details, int allChecks) {
         int correctChecksCounter = 0;
 
         for (int i = 0; i < allChecks; i++) {
-            if (isCorrectService(url, description)) {
+            if (isCorrectService(details)) {
                 correctChecksCounter++;
             }
         }
 
-        return new Message(url, description, correctChecksCounter, allChecks);
+        return new Message(details.getUrl(), details.getDescription(), correctChecksCounter, allChecks);
     }
 
-    public boolean isCorrectService(String url, String description) {
-        try (Connection connection = connectionFactory.build(url)) {
+    public boolean isCorrectService(HttpDetails details) {
+        try (Connection connection = connectionFactory.build(details)) {
             try {
                 String response = connection.response();
                 if (response != null) {
@@ -94,6 +94,18 @@ public class CpdApp2App {
             }
         } catch (Exception e) {
             throw new AppException(e);
+        }
+    }
+
+    public HttpDetails deformat(String key, String value) {
+        if (!value.contains(",")) {
+            return new HttpDetails(key, value);
+        } else {
+            String url = value.substring(0, value.indexOf(','));
+            String login = value.substring(value.indexOf(',') + 1, value.lastIndexOf(','));
+            String password = value.substring(value.lastIndexOf(',') + 1);
+
+            return new HttpDetails(key, url, login, password);
         }
     }
 }
