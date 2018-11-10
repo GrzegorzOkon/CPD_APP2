@@ -31,23 +31,20 @@ public class HttpsConnection implements Connection {
 
     private final HttpsURLConnection connection;
 
-    public HttpsConnection(HttpDetails details) {
+    HttpsConnection(HttpDetails details) {
         try {
             connection = (HttpsURLConnection) new URL(details.getUrl()).openConnection();
-
             if (details.getLogin() != null)
                 authorize(details.getLogin(), details.getPassword());
-
             setAcceptAllVerifier(connection);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new AppException(e);
         }
     }
 
     @Override
     public String response() throws AppException {
-        //validateResponse();
+        validateResponse();
         StringBuilder response = new StringBuilder();
         try (BufferedReader responseReader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             String line;
@@ -55,7 +52,6 @@ public class HttpsConnection implements Connection {
                 response.append(line);
             }
         } catch (IOException e) {
-            e.printStackTrace();
             throw new AppException(e);
         }
         return response.toString();
@@ -66,7 +62,19 @@ public class HttpsConnection implements Connection {
         connection.disconnect();
     }
 
-    private static void setAcceptAllVerifier(HttpsURLConnection connection) throws NoSuchAlgorithmException, KeyManagementException {
+    void validateResponse() {
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode != 200) {
+                String responseMessage = connection.getResponseMessage();
+                throw new AppException(String.format("Something went wrong! [%d] %s", responseCode, responseMessage));
+            }
+        } catch (IOException e) {
+            throw new AppException(e);
+        }
+    }
+
+    static void setAcceptAllVerifier(HttpsURLConnection connection) throws NoSuchAlgorithmException, KeyManagementException {
         if( null == sslSocketFactory) {
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, ALL_TRUSTING_TRUST_MANAGER, new java.security.SecureRandom());
@@ -76,7 +84,7 @@ public class HttpsConnection implements Connection {
         connection.setHostnameVerifier(ALL_TRUSTING_HOSTNAME_VERIFIER);
     }
 
-    private void authorize(String login, String password) {
+    void authorize(String login, String password) {
         String userpass = login + ":" + password;
         String basicAuth = "Basic " + javax.xml.bind.DatatypeConverter.printBase64Binary(userpass.getBytes());
         connection.setRequestProperty ("Authorization", basicAuth);

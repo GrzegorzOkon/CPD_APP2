@@ -10,21 +10,19 @@ public class HttpConnection implements Connection {
 
     private final HttpURLConnection connection;
 
-    public HttpConnection(HttpDetails details) {
+    HttpConnection(HttpDetails details) {
         try {
             connection = (HttpURLConnection) new URL(details.getUrl()).openConnection();
-
             if (details.getLogin() != null)
                 authorize(details.getLogin(), details.getPassword());
         } catch (IOException e) {
-            e.printStackTrace();
             throw new AppException(e);
         }
     }
 
     @Override
     public String response() throws AppException {
-        //validateResponse();
+        validateResponse();
         StringBuilder response = new StringBuilder();
         try (BufferedReader responseReader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             String line;
@@ -32,7 +30,6 @@ public class HttpConnection implements Connection {
                 response.append(line);
             }
         } catch (IOException e) {
-            e.printStackTrace();
             throw new AppException(e);
         }
         return response.toString();
@@ -43,7 +40,19 @@ public class HttpConnection implements Connection {
         connection.disconnect();
     }
 
-    private void authorize(String login, String password) {
+    void validateResponse() {
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode != 200) {
+                String responseMessage = connection.getResponseMessage();
+                throw new AppException(String.format("Something went wrong! [%d] %s", responseCode, responseMessage));
+            }
+        } catch (IOException e) {
+            throw new AppException(e);
+        }
+    }
+
+    void authorize(String login, String password) {
         String userpass = login + ":" + password;
         String basicAuth = "Basic " + javax.xml.bind.DatatypeConverter.printBase64Binary(userpass.getBytes());
         connection.setRequestProperty ("Authorization", basicAuth);

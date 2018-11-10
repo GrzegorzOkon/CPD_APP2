@@ -64,7 +64,9 @@ public class CpdApp2App {
                 if (response != null) {
                     return true;
                 }
-            } catch (AppException e) {}
+            } catch (AppException e) {
+                e.printStackTrace();
+            }
         }
 
         return false;
