@@ -11,9 +11,9 @@ import java.security.cert.X509Certificate;
 
 public class HttpsConnection implements Connection {
 
-    private static SSLSocketFactory sslSocketFactory = null;
+    protected static SSLSocketFactory sslSocketFactory = null;
 
-    private static final TrustManager[] ALL_TRUSTING_TRUST_MANAGER = new TrustManager[] {
+    protected static final TrustManager[] ALL_TRUSTING_TRUST_MANAGER = new TrustManager[] {
             new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
                     return null;
@@ -23,19 +23,17 @@ public class HttpsConnection implements Connection {
             }
     };
 
-    private static final HostnameVerifier ALL_TRUSTING_HOSTNAME_VERIFIER  = new HostnameVerifier() {
+    protected static final HostnameVerifier ALL_TRUSTING_HOSTNAME_VERIFIER  = new HostnameVerifier() {
         public boolean verify(String hostname, SSLSession session) {
             return true;
         }
     };
 
-    private final HttpsURLConnection connection;
+    protected final HttpsURLConnection connection;
 
     HttpsConnection(HttpDetails details) {
         try {
             connection = (HttpsURLConnection) new URL(details.getUrl()).openConnection();
-            if (details.getLogin() != null)
-                authorize(details.getLogin(), details.getPassword());
             setAcceptAllVerifier(connection);
         } catch (Exception e) {
             throw new AppException(e);
@@ -82,11 +80,5 @@ public class HttpsConnection implements Connection {
         }
         connection.setSSLSocketFactory(sslSocketFactory);
         connection.setHostnameVerifier(ALL_TRUSTING_HOSTNAME_VERIFIER);
-    }
-
-    void authorize(String login, String password) {
-        String userpass = login + ":" + password;
-        String basicAuth = "Basic " + javax.xml.bind.DatatypeConverter.printBase64Binary(userpass.getBytes());
-        connection.setRequestProperty ("Authorization", basicAuth);
     }
 }

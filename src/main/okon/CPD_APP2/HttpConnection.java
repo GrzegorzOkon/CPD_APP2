@@ -8,13 +8,11 @@ import java.net.URL;
 
 public class HttpConnection implements Connection {
 
-    private final HttpURLConnection connection;
+    protected final HttpURLConnection connection;
 
     HttpConnection(HttpDetails details) {
         try {
             connection = (HttpURLConnection) new URL(details.getUrl()).openConnection();
-            if (details.getLogin() != null)
-                authorize(details.getLogin(), details.getPassword());
         } catch (IOException e) {
             throw new AppException(e);
         }
@@ -50,11 +48,5 @@ public class HttpConnection implements Connection {
         } catch (IOException e) {
             throw new AppException(e);
         }
-    }
-
-    void authorize(String login, String password) {
-        String userpass = login + ":" + password;
-        String basicAuth = "Basic " + javax.xml.bind.DatatypeConverter.printBase64Binary(userpass.getBytes());
-        connection.setRequestProperty ("Authorization", basicAuth);
     }
 }
