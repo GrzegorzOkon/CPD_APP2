@@ -9,14 +9,21 @@ import java.util.List;
 import java.util.Properties;
 
 public class CpdApp2App {
-    private final ConnectionFactory connectionFactory;
+    private final ConnectionFactory httpConnectionFactory;
+    private final ConnectionFactory httpsConnectionFactory;
+    private final ConnectionFactory domainHttpConnectionFactory;
+    private final ConnectionFactory domainHttpsConnectionFactory;
 
     public CpdApp2App() {
-        this(new ConnectionFactory());
+        this(new HttpConnectionFactory(), new HttpsConnectionFactory(), new DomainHttpConnectionFactory(), new DomainHttpsConnectionFactory());
     }
 
-    public CpdApp2App(ConnectionFactory connectionFactory) {
-        this.connectionFactory = connectionFactory;
+    public CpdApp2App(HttpConnectionFactory httpConnectionFactory, HttpsConnectionFactory httpsConnectionFactory,
+        DomainHttpConnectionFactory domainHttpConnectionFactory, DomainHttpsConnectionFactory domainHttpsConnectionFactory) {
+        this.httpConnectionFactory = httpConnectionFactory;
+        this.httpsConnectionFactory = httpsConnectionFactory;
+        this.domainHttpConnectionFactory = domainHttpConnectionFactory;
+        this.domainHttpsConnectionFactory = domainHttpsConnectionFactory;
     }
 
     public static void main(String[] args) {
@@ -47,9 +54,10 @@ public class CpdApp2App {
 
     public Message checkService(HttpDetails details, int allChecks) {
         int correctChecksCounter = 0;
+        ConnectionFactory connectionFactory = chooseFactory(details);
 
         for (int i = 0; i < allChecks; i++) {
-            if (isCorrectService(details)) {
+            if (isCorrectService(details, connectionFactory)) {
                 correctChecksCounter++;
             }
         }
@@ -57,7 +65,19 @@ public class CpdApp2App {
         return new Message(details.getUrl(), details.getDescription(), correctChecksCounter, allChecks);
     }
 
-    public boolean isCorrectService(HttpDetails details) {
+    public ConnectionFactory chooseFactory(HttpDetails details) {
+        if (details.getUrl().contains("http://") && details.getLogin() == null) {
+            return httpConnectionFactory;
+        } else if (details.getUrl().contains("http://") && details.getLogin() != null) {
+            return domainHttpConnectionFactory;
+        } else if (details.getUrl().contains("https://") && details.getLogin() == null) {
+            return httpsConnectionFactory;
+        } else {
+            return domainHttpsConnectionFactory;
+        }
+    }
+
+    public boolean isCorrectService(HttpDetails details, ConnectionFactory connectionFactory) {
         try (Connection connection = connectionFactory.build(details)) {
             try {
                 String response = connection.response();
