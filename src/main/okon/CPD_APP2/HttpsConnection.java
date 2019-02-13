@@ -31,7 +31,7 @@ public class HttpsConnection implements Connection {
 
     protected final HttpsURLConnection connection;
 
-    HttpsConnection(HttpDetails details) {
+    HttpsConnection(HttpDetailsJob details) {
         try {
             connection = (HttpsURLConnection) new URL(details.getUrl()).openConnection();
             setAcceptAllVerifier(connection);

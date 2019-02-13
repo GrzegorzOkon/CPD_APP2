@@ -1,7 +1,7 @@
 package okon.CPD_APP2;
 
 public class DomainHttpsConnection extends HttpsConnection {
-    DomainHttpsConnection(HttpDetails details) {
+    DomainHttpsConnection(HttpDetailsJob details) {
         super(details);
         authorize(details.getLogin(), details.getPassword());
     }

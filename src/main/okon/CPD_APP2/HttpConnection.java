@@ -10,7 +10,7 @@ public class HttpConnection implements Connection {
 
     protected final HttpURLConnection connection;
 
-    HttpConnection(HttpDetails details) {
+    HttpConnection(HttpDetailsJob details) {
         try {
             connection = (HttpURLConnection) new URL(details.getUrl()).openConnection();
         } catch (IOException e) {

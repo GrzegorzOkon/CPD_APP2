@@ -1,17 +1,17 @@
 package okon.CPD_APP2;
 
-public class HttpDetails {
+public class HttpDetailsJob {
     private String description;
     private String url;
     private String login;
     private String password;
 
-    public HttpDetails(String description, String url) {
+    public HttpDetailsJob(String description, String url) {
         this.description = description;
         this.url = url;
     }
 
-    public HttpDetails(String description, String url, String login, String password) {
+    public HttpDetailsJob(String description, String url, String login, String password) {
         this.description = description;
         this.url = url;
         this.login = login;

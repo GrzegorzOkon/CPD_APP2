@@ -2,94 +2,51 @@ package okon.CPD_APP2;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class CpdApp2App {
-    private final ConnectionFactory httpConnectionFactory;
-    private final ConnectionFactory httpsConnectionFactory;
-    private final ConnectionFactory domainHttpConnectionFactory;
-    private final ConnectionFactory domainHttpsConnectionFactory;
+    static final ConnectionFactory httpConnectionFactory = new HttpConnectionFactory();
+    static final ConnectionFactory httpsConnectionFactory = new HttpsConnectionFactory();
+    static final ConnectionFactory domainHttpConnectionFactory = new DomainHttpConnectionFactory();
+    static final ConnectionFactory domainHttpsConnectionFactory = new DomainHttpsConnectionFactory();
 
-    public CpdApp2App() {
-        this(new HttpConnectionFactory(), new HttpsConnectionFactory(), new DomainHttpConnectionFactory(), new DomainHttpsConnectionFactory());
-    }
+    static final Queue<HttpDetailsJob> webserviceQueue = new LinkedList();
+    static final List<Message> messageList = new ArrayList();
 
-    public CpdApp2App(HttpConnectionFactory httpConnectionFactory, HttpsConnectionFactory httpsConnectionFactory,
-        DomainHttpConnectionFactory domainHttpConnectionFactory, DomainHttpsConnectionFactory domainHttpsConnectionFactory) {
-        this.httpConnectionFactory = httpConnectionFactory;
-        this.httpsConnectionFactory = httpsConnectionFactory;
-        this.domainHttpConnectionFactory = domainHttpConnectionFactory;
-        this.domainHttpsConnectionFactory = domainHttpsConnectionFactory;
-    }
+    static final int checkingSumForWebservice = 5;
 
     public static void main(String[] args) {
         CpdApp2App cpd_app2 = new CpdApp2App();
 
         Properties properties = cpd_app2.loadProperties();
+        cpd_app2.rewriteToWebservicesQueue(properties);
 
-        List<Message> services = cpd_app2.checkAllServices(properties, 5);
+        cpd_app2.startThreadPool(4);
 
         Comparator<Message> byUrlComparator = (m1, m2) -> m1.url.compareTo(m2.url);
-        Collections.sort(services, byUrlComparator);
+        Collections.sort(messageList, byUrlComparator);
 
-        cpd_app2.save("CPD_APP2.txt", services);
+        cpd_app2.save("CPD_APP2.txt", messageList);
     }
 
-    public List<Message> checkAllServices(Properties properties, int allChecks) {
-        List<Message> checkingDetails = new ArrayList<>();
+    public void startThreadPool(int threadSum) {
+        Thread[] threads = new Thread[threadSum];
 
-        for (Object key : properties.keySet()) {
-            HttpDetails details = deformat((String)key, (String)properties.get(key));
-
-            Message message = checkService(details, allChecks);
-            checkingDetails.add(message);
+        for (int i = 0; i < threadSum; i++) {
+            threads[i] = new MessageProducerThread();
         }
 
-        return checkingDetails;
-    }
-
-    public Message checkService(HttpDetails details, int allChecks) {
-        int correctChecksCounter = 0;
-        ConnectionFactory connectionFactory = chooseFactory(details);
-
-        for (int i = 0; i < allChecks; i++) {
-            if (isCorrectService(details, connectionFactory)) {
-                correctChecksCounter++;
-            }
+        for (int i = 0; i < threadSum; i++) {
+            threads[i].start();
         }
 
-        return new Message(details.getUrl(), details.getDescription(), correctChecksCounter, allChecks);
-    }
-
-    public ConnectionFactory chooseFactory(HttpDetails details) {
-        if (details.getUrl().contains("http://") && details.getLogin() == null) {
-            return httpConnectionFactory;
-        } else if (details.getUrl().contains("http://") && details.getLogin() != null) {
-            return domainHttpConnectionFactory;
-        } else if (details.getUrl().contains("https://") && details.getLogin() == null) {
-            return httpsConnectionFactory;
-        } else {
-            return domainHttpsConnectionFactory;
-        }
-    }
-
-    public boolean isCorrectService(HttpDetails details, ConnectionFactory connectionFactory) {
-        try (Connection connection = connectionFactory.build(details)) {
+        for (int i = 0; i < threadSum; i++) {
             try {
-                String response = connection.response();
-                if (response != null) {
-                    return true;
-                }
-            } catch (AppException e) {
-                e.printStackTrace();
+                threads[i].join();
+            } catch (Exception e) {
+                throw new AppException(e);
             }
         }
-
-        return false;
     }
 
     private Properties loadProperties() {
@@ -102,6 +59,14 @@ public class CpdApp2App {
         }
 
         return properties;
+    }
+
+    private void rewriteToWebservicesQueue(Properties properties) {
+
+        for (Object key : properties.keySet()) {
+            HttpDetailsJob job = deformat((String)key, (String)properties.get(key));
+            webserviceQueue.add(job);
+        }
     }
 
     public void save(String fileName, List<Message> content) {
@@ -119,15 +84,15 @@ public class CpdApp2App {
         }
     }
 
-    public HttpDetails deformat(String key, String value) {
+    public HttpDetailsJob deformat(String key, String value) {
         if (!value.contains(",")) {
-            return new HttpDetails(key, value);
+            return new HttpDetailsJob(key, value);
         } else {
             String url = value.substring(0, value.indexOf(','));
             String login = value.substring(value.indexOf(',') + 1, value.lastIndexOf(','));
             String password = value.substring(value.lastIndexOf(',') + 1);
 
-            return new HttpDetails(key, url, login, password);
+            return new HttpDetailsJob(key, url, login, password);
         }
     }
 }
