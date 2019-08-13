@@ -26,7 +26,7 @@ public class CpdApp2App {
         Comparator<Message> byUrlComparator = (m1, m2) -> m1.url.compareTo(m2.url);
         Collections.sort(messageList, byUrlComparator);
 
-        cpd_app2.save("CPD_APP2.txt", messageList);
+        cpd_app2.save(cpd_app2.getJarFileName() + ".txt", messageList);
     }
 
     public void startThreadPool(int threadSum) {
@@ -67,6 +67,14 @@ public class CpdApp2App {
             HttpDetailsJob job = deformat((String)key, (String)properties.get(key));
             webserviceQueue.add(job);
         }
+    }
+
+    private String getJarFileName() {
+        String path = CpdApp2App.class.getResource(CpdApp2App.class.getSimpleName() + ".class").getFile();
+        path = path.substring(0, path.lastIndexOf('!'));
+        path = path.substring(path.lastIndexOf("/") + 1, path.lastIndexOf('.'));
+
+        return path;
     }
 
     public void save(String fileName, List<Message> content) {
