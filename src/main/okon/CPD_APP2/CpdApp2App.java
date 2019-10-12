@@ -35,7 +35,7 @@ public class CpdApp2App {
     }
 
     static boolean isConsoleOutput(String[] args) {
-        if (args.length > 0 && args[0].toLowerCase().equals("auto")) {
+        if (args.length > 0 && args[0].toLowerCase().equals("console")) {
             return true;
         }
         return false;
