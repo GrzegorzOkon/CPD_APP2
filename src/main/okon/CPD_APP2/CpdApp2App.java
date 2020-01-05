@@ -1,12 +1,12 @@
 package okon.CPD_APP2;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.Writer;
+import okon.CPD_APP2.params.AddressParamsReader;
+
+import java.io.*;
 import java.util.*;
 
 public class CpdApp2App {
+    static final Properties properties = AddressParamsReader.readProperties(new File("./params/addresses.properties"));
     static final ConnectionFactory httpConnectionFactory = new HttpConnectionFactory();
     static final ConnectionFactory httpsConnectionFactory = new HttpsConnectionFactory();
     static final ConnectionFactory domainHttpConnectionFactory = new DomainHttpConnectionFactory();
@@ -17,7 +17,6 @@ public class CpdApp2App {
 
     public static void main(String[] args) {
         CpdApp2App cpd_app2 = new CpdApp2App();
-        Properties properties = cpd_app2.loadProperties();
         cpd_app2.rewriteToWebservicesQueue(properties);
         cpd_app2.startThreadPool(4);
         Comparator<Message> byUrlComparator = (m1, m2) -> m1.url.compareTo(m2.url);
@@ -29,21 +28,17 @@ public class CpdApp2App {
         String path = CpdApp2App.class.getResource(CpdApp2App.class.getSimpleName() + ".class").getFile();
         path = path.substring(0, path.lastIndexOf('!'));
         path = path.substring(path.lastIndexOf("/") + 1, path.lastIndexOf('.'));
-
         return path;
     }
 
     public void startThreadPool(int threadSum) {
         Thread[] threads = new Thread[threadSum];
-
         for (int i = 0; i < threadSum; i++) {
             threads[i] = new MessageProducerThread();
         }
-
         for (int i = 0; i < threadSum; i++) {
             threads[i].start();
         }
-
         for (int i = 0; i < threadSum; i++) {
             try {
                 threads[i].join();
@@ -51,18 +46,6 @@ public class CpdApp2App {
                 throw new AppException(e);
             }
         }
-    }
-
-    private Properties loadProperties() {
-        Properties properties = new Properties();
-
-        try {
-            properties.load(new FileInputStream("params/addresses.properties"));
-        } catch (Exception e) {
-            throw new AppException(e);
-        }
-
-        return properties;
     }
 
     private void rewriteToWebservicesQueue(Properties properties) {
@@ -106,7 +89,6 @@ public class CpdApp2App {
             String url = value.substring(0, value.indexOf(','));
             String login = value.substring(value.indexOf(',') + 1, value.lastIndexOf(','));
             String password = value.substring(value.lastIndexOf(',') + 1);
-
             return new HttpDetailsJob(key, url, login, password);
         }
     }
