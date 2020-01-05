@@ -3,21 +3,17 @@ package okon.CPD_APP2;
 import static okon.CPD_APP2.CpdApp2App.*;
 
 public class MessageProducerThread extends Thread {
-
     @Override
     public void run() {
         while (!webserviceQueue.isEmpty()) {
             HttpDetailsJob job = null;
-
             synchronized (webserviceQueue) {
                 if (!webserviceQueue.isEmpty()) {
                     job = webserviceQueue.poll();
                 }
             }
-
             if (job != null) {
                 Message message = checkService(job, checkingSumForWebservice);
-
                 synchronized (messageList) {
                     messageList.add(message);
                 }
@@ -28,13 +24,11 @@ public class MessageProducerThread extends Thread {
     private Message checkService(HttpDetailsJob job, int checkingSum) {
         int correctChecksCounter = 0;
         ConnectionFactory connectionFactory = chooseFactory(job);
-
         for (int i = 0; i < checkingSum; i++) {
             if (isCorrectService(job, connectionFactory)) {
                 correctChecksCounter++;
             }
         }
-
         return new Message(job.getUrl(), job.getDescription(), correctChecksCounter, checkingSum);
     }
 
@@ -58,10 +52,8 @@ public class MessageProducerThread extends Thread {
                     return true;
                 }
             } catch (AppException e) {
-                e.printStackTrace();
             }
         }
-
         return false;
     }
 }

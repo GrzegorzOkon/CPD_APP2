@@ -2,11 +2,11 @@ package okon.CPD_APP2;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.Writer;
 import java.util.*;
 
 public class CpdApp2App {
-    static boolean CONSOLE = false;
-    static boolean FILE = false;
     static final ConnectionFactory httpConnectionFactory = new HttpConnectionFactory();
     static final ConnectionFactory httpsConnectionFactory = new HttpsConnectionFactory();
     static final ConnectionFactory domainHttpConnectionFactory = new DomainHttpConnectionFactory();
@@ -16,7 +16,6 @@ public class CpdApp2App {
     static final int checkingSumForWebservice = 5;
 
     public static void main(String[] args) {
-        setResultOutput(args);
         CpdApp2App cpd_app2 = new CpdApp2App();
         Properties properties = cpd_app2.loadProperties();
         cpd_app2.rewriteToWebservicesQueue(properties);
@@ -24,21 +23,6 @@ public class CpdApp2App {
         Comparator<Message> byUrlComparator = (m1, m2) -> m1.url.compareTo(m2.url);
         Collections.sort(messageList, byUrlComparator);
         cpd_app2.print(messageList);
-    }
-
-    static void setResultOutput(String[] args) {
-        if (isConsoleOutput(args)) {
-            CONSOLE = true;
-        } else {
-            FILE = true;
-        }
-    }
-
-    static boolean isConsoleOutput(String[] args) {
-        if (args.length > 0 && args[0].toLowerCase().equals("console")) {
-            return true;
-        }
-        return false;
     }
 
     static String getJarFileName() {
@@ -89,12 +73,8 @@ public class CpdApp2App {
     }
 
     private void print(List<Message> content) {
-        if(CONSOLE) {
-            printToConsole(content);
-        }
-        if (FILE){
-            printToFile(content);
-        }
+        printToConsole(content);
+        printToFile(content);
     }
 
     private void printToConsole(List<Message> content) {
@@ -106,13 +86,13 @@ public class CpdApp2App {
     }
 
     private void printToFile(List<Message> content) {
-        try (FileOutputStream out = new FileOutputStream(new java.io.File(CpdApp2App.getJarFileName() + ".txt"))) {
-            for(Message message : content) {
+        try (Writer out = new FileWriter(new java.io.File(CpdApp2App.getJarFileName() + ".txt"))) {
+            for (Message message : content) {
                 List<String> formattedText = new MessageFormatter(message).format();
-                out.write(formattedText.get(0).getBytes());
-                out.write(System.getProperty("line.separator").getBytes());
-                out.write(formattedText.get(1).getBytes());
-                out.write(System.getProperty("line.separator").getBytes());
+                out.write(formattedText.get(0));
+                out.write(System.getProperty("line.separator"));
+                out.write(formattedText.get(1));
+                out.write(System.getProperty("line.separator"));
             }
         } catch (Exception e) {
             throw new AppException(e);
